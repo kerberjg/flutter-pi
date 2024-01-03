@@ -7,6 +7,9 @@ on:
     branches: [ master, feature/gh-actions, feature/compositor-ng ]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   pi4:
     name: Build and Test on Raspberry Pi 4
@@ -54,7 +57,7 @@ jobs:
       #     id
       #     sudo apt-get install -y \
       #       git cmake libgl1-mesa-dev libgles2-mesa-dev libegl1-mesa-dev libdrm-dev libgbm-dev \
-      #       ttf-mscorefonts-installer fontconfig libsystemd-dev libinput-dev libudev-dev \
+      #       libsystemd-dev libinput-dev libudev-dev \
       #       libxkbcommon-dev ninja-build libgstreamer-plugins-base1.0-dev \
       #       ${{ matrix.vulkan-deps }} \
       #       ${{ matrix.clang-deps }}
@@ -83,6 +86,12 @@ jobs:
       - name: Test
         working-directory: build
         run: ctest -C ${{ matrix.build-type }} --output-on-failure
+
+      - name: Upload
+        uses: actions/upload-artifact@v3
+        with:
+          name: flutter-pi-${{ matrix.compiler }}-${{ matrix.runner }}-${{ matrix.graphics-backends }}-${{ matrix.build-type }}
+          path: build/flutter-pi
 
   container:
     name: Build & Test in Container
@@ -134,7 +143,7 @@ jobs:
         run: |
           apt-get update && apt-get install -y \
             git cmake libdrm-dev libgbm-dev \
-            fonts-liberation fontconfig libsystemd-dev libinput-dev libudev-dev \
+            libsystemd-dev libinput-dev libudev-dev \
             libxkbcommon-dev ninja-build libgstreamer-plugins-base1.0-dev \
             ${{ matrix.vulkan-deps }} \
             ${{ matrix.opengl-deps }} \
@@ -172,3 +181,44 @@ jobs:
     steps:
       - run: |
           echo 'all required checks passed.'
+
+  release:
+    name: Create Release
+    needs: [pi4]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Get Version
+        id: version
+        run: |
+          DATE=$(date +'%Y%m%d%H%M')
+          echo "::set-output name=date::$DATE"
+          SHORT_SHA=$(echo ${{ github.sha }} | head -c 7)
+          echo "::set-output name=short_sha::$SHORT_SHA"
+      
+      - name: Download Build (ARM)
+        uses: actions/download-artifact@v4
+        with:
+          name: flutter-pi-ARM-gcc-vulkan-and-opengl-Release # Adjust the name based on the artifact name
+
+      - name: Download Build (ARM64)
+        uses: actions/download-artifact@v4
+        with:
+          name: flutter-pi-ARM64-gcc-vulkan-and-opengl-Release # Adjust the name based on the artifact name
+
+      - name: Display structure of downloaded files
+        run: ls -R
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        id: create_release
+        with:
+          draft: false
+          prerelease: false
+          name: ${{ steps.version.outputs.date }}
+          tag_name: ${{ steps.version.outputs.short_sha }}
+          # body_path: CHANGELOG.md
+          files: |
+            flutter-pi
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
