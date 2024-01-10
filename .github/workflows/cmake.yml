@@ -90,7 +90,7 @@ jobs:
       - name: Upload
         uses: actions/upload-artifact@v3
         with:
-          name: flutter-pi-${{ matrix.compiler }}-${{ matrix.runner }}-${{ matrix.graphics-backends }}-${{ matrix.build-type }}
+          name: flutter-pi-${{ matrix.runner }}-${{ matrix.compiler }}-${{ matrix.graphics-backends }}-${{ matrix.build-type }}
           path: build/flutter-pi
 
   # container:
@@ -204,8 +204,6 @@ jobs:
 
       - name: Download Build (ARM64)
         uses: actions/download-artifact@v4
-        with:
-          name: flutter-pi-ARM64-gcc-vulkan-and-opengl-Release # Adjust the name based on the artifact name
 
       - name: Display structure of downloaded files
         run: ls -R
