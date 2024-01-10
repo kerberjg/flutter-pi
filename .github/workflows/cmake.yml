@@ -88,9 +88,9 @@ jobs:
         run: ctest -C ${{ matrix.build-type }} --output-on-failure
 
       - name: Upload
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: flutter-pi-${{ matrix.compiler }}-${{ matrix.runner }}-${{ matrix.graphics-backends }}-${{ matrix.build-type }}
+          name: flutter-pi-${{ matrix.runner }}-${{ matrix.compiler }}-${{ matrix.graphics-backends }}-${{ matrix.build-type }}
           path: build/flutter-pi
 
   # container:
@@ -197,15 +197,10 @@ jobs:
           SHORT_SHA=$(echo ${{ github.sha }} | head -c 7)
           echo "::set-output name=short_sha::$SHORT_SHA"
       
-      # - name: Download Build (ARM)
-      #   uses: actions/download-artifact@v4
-      #   with:
-      #     name: flutter-pi-ARM-gcc-vulkan-and-opengl-Release # Adjust the name based on the artifact name
-
-      - name: Download Build (ARM64)
+      - name: Download Build (ARM)
         uses: actions/download-artifact@v4
         with:
-          name: flutter-pi-ARM64-gcc-vulkan-and-opengl-Release # Adjust the name based on the artifact name
+          name: flutter-pi-ARM-gcc-vulkan-and-opengl-Release # Adjust the name based on the artifact name
 
       - name: Display structure of downloaded files
         run: ls -R
